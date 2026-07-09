@@ -1,0 +1,24 @@
+'use client';
+
+import { useMemo, useState } from 'react';
+import Link from 'next/link';
+
+type Row = { ref: string; location: string; trade: string; description: string; priority: string; status: string; due: string };
+const demoRows: Row[] = [
+  { ref:'SNG-001', location:'Kitchen', trade:'Decorator', description:'Touch up around window reveal', priority:'Medium', status:'Open', due:'2026-07-12' },
+  { ref:'SNG-002', location:'Utility', trade:'Joiner', description:'Adjust plinth under sink unit', priority:'Low', status:'Open', due:'2026-07-13' },
+  { ref:'SNG-003', location:'Hall', trade:'Flooring', description:'Trim threshold bar at doorway', priority:'High', status:'Closed', due:'2026-07-10' }
+];
+function downloadBlob(blob: Blob, filename: string) { const url = URL.createObjectURL(blob); const a = document.createElement('a'); a.href = url; a.download = filename; a.click(); URL.revokeObjectURL(url); }
+export default function PublicSnaggingTool() {
+  const [project, setProject] = useState('14 Marsh Lane — kitchen reinstatement');
+  const [rows, setRows] = useState<Row[]>(demoRows);
+  const openCount = useMemo(()=>rows.filter(r=>r.status !== 'Closed').length,[rows]);
+  function updateRow(index:number, patch:Partial<Row>) { setRows(rows.map((row,i)=>i===index?{...row,...patch}:row)); }
+  async function downloadXlsx() { const response = await fetch('/api/export/xlsx', { method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ workbookName:`Snagging List - ${project}`, sheets:[{ name:'Snagging list', headings:['Ref','Location','Trade','Description','Priority','Status','Due date'], rows: rows.map(r=>[r.ref,r.location,r.trade,r.description,r.priority,r.status,r.due]) }, { name:'Summary', headings:['Field','Value'], rows:[['Project',project],['Open snags', openCount],['Total snags', rows.length]] }] }) }); downloadBlob(await response.blob(), 'snagging-list.xlsx'); }
+  return <div className="tool-page"><div className="wrap"><div className="page-title no-print"><div><div className="eyebrow">SNG-04 / Working tool</div><h1>Snagging list</h1><p className="muted">Log defects by room, trade, priority and status so close-out does not get messy.</p></div><div className="actions"><Link className="btn btn-ghost" href="/tools">All tools</Link><button className="btn btn-primary" onClick={()=>window.print()}>Print / save PDF</button><button className="btn btn-hivis" onClick={downloadXlsx}>Download XLSX</button></div></div>
+  <div className="card form-grid no-print"><div className="field full"><label>Project</label><input value={project} onChange={e=>setProject(e.target.value)} /></div></div>
+  <div className="card no-print"><div className="page-title"><div><h2>Snagging rows</h2><p className="muted">Open snags: <strong>{openCount}</strong> / {rows.length}</p></div><div className="actions"><button className="btn btn-ghost" onClick={()=>setRows(demoRows)}>Demo rows</button><button className="btn btn-hivis" onClick={()=>setRows([...rows,{ref:`SNG-${String(rows.length+1).padStart(3,'0')}`,location:'',trade:'',description:'',priority:'Medium',status:'Open',due:''}])}>Add snag</button></div></div><div className="table-wrap"><table className="table"><thead><tr><th>Ref</th><th>Location</th><th>Trade</th><th>Description</th><th>Priority</th><th>Status</th><th>Due</th><th></th></tr></thead><tbody>{rows.map((r,i)=><tr key={i}><td><input value={r.ref} onChange={e=>updateRow(i,{ref:e.target.value})} style={{width:95}} /></td><td><input value={r.location} onChange={e=>updateRow(i,{location:e.target.value})} /></td><td><input value={r.trade} onChange={e=>updateRow(i,{trade:e.target.value})} /></td><td><input value={r.description} onChange={e=>updateRow(i,{description:e.target.value})} /></td><td><select value={r.priority} onChange={e=>updateRow(i,{priority:e.target.value})}><option>Low</option><option>Medium</option><option>High</option></select></td><td><select value={r.status} onChange={e=>updateRow(i,{status:e.target.value})}><option>Open</option><option>In progress</option><option>Closed</option></select></td><td><input type="date" value={r.due} onChange={e=>updateRow(i,{due:e.target.value})} /></td><td><button className="btn btn-ghost" onClick={()=>setRows(rows.filter((_,x)=>x!==i))}>Remove</button></td></tr>)}</tbody></table></div></div>
+  <div className="print-page"><div className="print-head"><div><div className="eyebrow">SNG-04 / SNAGGING LIST</div><h1>Snagging list</h1><p>{project}</p></div><div><strong>Open snags</strong><p>{openCount}</p></div></div><div className="table-wrap"><table className="table"><thead><tr><th>Ref</th><th>Location</th><th>Trade</th><th>Description</th><th>Priority</th><th>Status</th><th>Due</th></tr></thead><tbody>{rows.map((r,i)=><tr key={i}><td>{r.ref}</td><td>{r.location}</td><td>{r.trade}</td><td>{r.description}</td><td>{r.priority}</td><td>{r.status}</td><td>{r.due}</td></tr>)}</tbody></table></div></div>
+  </div></div>;
+}
