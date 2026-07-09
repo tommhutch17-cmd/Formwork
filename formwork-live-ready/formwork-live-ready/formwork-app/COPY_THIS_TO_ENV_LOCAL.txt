@@ -1,0 +1,11 @@
+# Rename this file to .env.local after copying the real values in.
+
+NEXT_PUBLIC_SUPABASE_URL=https://your-project-ref.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key-only-for-webhooks-if-needed
+
+STRIPE_SECRET_KEY=sk_test_xxx
+STRIPE_WEBHOOK_SECRET=whsec_xxx
+STRIPE_PRICE_FULL_PACK=price_xxx
+STRIPE_PRICE_MONTHLY=price_xxx
+NEXT_PUBLIC_SITE_URL=http://localhost:3000
